@@ -3,12 +3,21 @@
 Script to promote a model to Production stage in MLflow
 """
 import os
+import logging
 import argparse
 from dotenv import load_dotenv
 import mlflow
 from mlflow.tracking import MlflowClient
 
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 
 def promote_model(model_name: str, version: str = None, stage: str = "Production"):
@@ -30,7 +39,7 @@ def promote_model(model_name: str, version: str = None, stage: str = "Production
         model_versions = client.search_model_versions(f"name='{model_name}'")
 
         if not model_versions:
-            print(f"❌ No model found with name: {model_name}")
+            logger.error(f"No model found with name: {model_name}")
             return
 
         # Determine which version to promote
@@ -38,9 +47,9 @@ def promote_model(model_name: str, version: str = None, stage: str = "Production
             # Get the latest version
             latest_version = max([int(mv.version) for mv in model_versions])
             version = str(latest_version)
-            print(f"Promoting latest version: {version}")
+            logger.info(f"Promoting latest version: {version}")
         else:
-            print(f"Promoting specified version: {version}")
+            logger.info(f"Promoting specified version: {version}")
 
         # Transition to new stage
         client.transition_model_version_stage(
@@ -50,16 +59,16 @@ def promote_model(model_name: str, version: str = None, stage: str = "Production
             archive_existing_versions=True  # Archive old versions in this stage
         )
 
-        print(f"✅ Successfully promoted {model_name} version {version} to {stage}")
+        logger.info(f"Successfully promoted {model_name} version {version} to {stage}")
 
         # Show current model versions and stages
-        print("\nCurrent model versions:")
+        logger.info("Current model versions:")
         model_versions = client.search_model_versions(f"name='{model_name}'")
         for mv in sorted(model_versions, key=lambda x: int(x.version), reverse=True):
-            print(f"  Version {mv.version}: {mv.current_stage}")
+            logger.info(f"  Version {mv.version}: {mv.current_stage}")
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.error(f"Error: {e}")
 
 
 if __name__ == "__main__":
@@ -83,8 +92,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("=" * 60)
-    print("MLflow Model Promotion Tool")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("MLflow Model Promotion Tool")
+    logger.info("=" * 60)
 
     promote_model(args.model_name, args.version, args.stage)

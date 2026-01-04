@@ -3,6 +3,7 @@ D&D Character Class Predictor Training Script
 Trains a model to predict character class based on ability scores
 """
 import os
+import logging
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -14,6 +15,14 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # D&D Classes and their typical stat distributions
 CLASS_PROFILES = {
@@ -61,8 +70,8 @@ def train_model(n_estimators=100, max_depth=10, random_state=42):
     mlflow.set_tracking_uri(mlflow_uri)
     mlflow.set_experiment("dnd-character-classifier")
 
-    print(f"MLflow Tracking URI: {mlflow_uri}")
-    print("Generating synthetic training data...")
+    logger.info(f"MLflow Tracking URI: {mlflow_uri}")
+    logger.info("Generating synthetic training data...")
 
     # Generate data
     df = generate_character_data(n_samples_per_class=500)
@@ -71,8 +80,8 @@ def train_model(n_estimators=100, max_depth=10, random_state=42):
     os.makedirs('../data', exist_ok=True)
     df.head(100).to_csv('../data/sample_characters.csv', index=False)
 
-    print(f"Generated {len(df)} characters across {df['class'].nunique()} classes")
-    print(f"\nClass distribution:\n{df['class'].value_counts()}")
+    logger.info(f"Generated {len(df)} characters across {df['class'].nunique()} classes")
+    logger.info(f"Class distribution:\n{df['class'].value_counts()}")
 
     # Prepare features and target
     feature_cols = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']
@@ -84,8 +93,8 @@ def train_model(n_estimators=100, max_depth=10, random_state=42):
         X, y, test_size=0.2, random_state=random_state, stratify=y
     )
 
-    print(f"\nTraining set: {len(X_train)} samples")
-    print(f"Test set: {len(X_test)} samples")
+    logger.info(f"Training set: {len(X_train)} samples")
+    logger.info(f"Test set: {len(X_test)} samples")
 
     # Start MLflow run
     with mlflow.start_run(run_name="random-forest-classifier"):
@@ -99,7 +108,7 @@ def train_model(n_estimators=100, max_depth=10, random_state=42):
         }
         mlflow.log_params(params)
 
-        print("\nTraining Random Forest Classifier...")
+        logger.info("Training Random Forest Classifier...")
 
         # Train model
         model = RandomForestClassifier(
@@ -116,9 +125,9 @@ def train_model(n_estimators=100, max_depth=10, random_state=42):
         # Calculate metrics
         accuracy = accuracy_score(y_test, y_pred)
 
-        print(f"\nModel Performance:")
-        print(f"Accuracy: {accuracy:.4f}")
-        print(f"\nClassification Report:\n{classification_report(y_test, y_pred)}")
+        logger.info(f"Model Performance:")
+        logger.info(f"Accuracy: {accuracy:.4f}")
+        logger.info(f"Classification Report:\n{classification_report(y_test, y_pred)}")
 
         # Log metrics
         mlflow.log_metric("accuracy", accuracy)
@@ -136,7 +145,7 @@ def train_model(n_estimators=100, max_depth=10, random_state=42):
             'importance': model.feature_importances_
         }).sort_values('importance', ascending=False)
 
-        print(f"\nFeature Importances:\n{feature_importance}")
+        logger.info(f"Feature Importances:\n{feature_importance}")
 
         for _, row in feature_importance.iterrows():
             mlflow.log_metric(f"importance_{row['feature']}", row['importance'])
@@ -163,19 +172,19 @@ def train_model(n_estimators=100, max_depth=10, random_state=42):
         )
 
         run_id = mlflow.active_run().info.run_id
-        print(f"\nMLflow Run ID: {run_id}")
-        print(f"Model registered as: dnd-character-classifier")
+        logger.info(f"MLflow Run ID: {run_id}")
+        logger.info(f"Model registered as: dnd-character-classifier")
 
     return model, accuracy
 
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("D&D Character Class Predictor - Training Script")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("D&D Character Class Predictor - Training Script")
+    logger.info("=" * 60)
 
     model, accuracy = train_model(n_estimators=100, max_depth=10)
 
-    print("\n" + "=" * 60)
-    print(f"Training completed! Final accuracy: {accuracy:.4f}")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info(f"Training completed! Final accuracy: {accuracy:.4f}")
+    logger.info("=" * 60)

@@ -3,6 +3,7 @@ FastAPI Model Serving for D&D Character Class Predictor
 Loads model from MLflow and serves predictions via REST API
 """
 import os
+import logging
 from typing import List, Dict
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -12,6 +13,14 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="D&D Character Class Predictor API",
@@ -68,11 +77,11 @@ def load_model():
         if model_stage == "Production" or model_stage == "Staging":
             # Load specific stage
             model_uri = f"models:/{model_name}/{model_stage}"
-            print(f"Loading model from stage: {model_stage}")
+            logger.info(f"Loading model from stage: {model_stage}")
         else:
             # Load latest version
             model_uri = f"models:/{model_name}/latest"
-            print(f"Loading latest model version")
+            logger.info("Loading latest model version")
 
         model = mlflow.pyfunc.load_model(model_uri)
         model_info = {
@@ -80,11 +89,11 @@ def load_model():
             'model_uri': model_uri,
             'mlflow_tracking_uri': mlflow_uri
         }
-        print(f"Model loaded successfully: {model_uri}")
+        logger.info(f"Model loaded successfully: {model_uri}")
 
     except Exception as e:
-        print(f"Error loading model: {e}")
-        print(f"Attempting to load latest version from runs...")
+        logger.error(f"Error loading model: {e}")
+        logger.info("Attempting to load latest version from runs...")
 
         try:
             # Fallback: try to load the latest run
@@ -101,12 +110,12 @@ def load_model():
                     'version': latest_version.version,
                     'mlflow_tracking_uri': mlflow_uri
                 }
-                print(f"Model loaded from version {latest_version.version}")
+                logger.info(f"Model loaded from version {latest_version.version}")
             else:
                 raise Exception(f"No registered model found: {model_name}")
 
         except Exception as e2:
-            print(f"Fallback also failed: {e2}")
+            logger.error(f"Fallback also failed: {e2}")
             raise
 
 
@@ -115,10 +124,10 @@ async def startup_event():
     """Load model on startup"""
     try:
         load_model()
-        print("Model server ready!")
+        logger.info("Model server ready!")
     except Exception as e:
-        print(f"Warning: Failed to load model on startup: {e}")
-        print("Model will attempt to load on first prediction request")
+        logger.warning(f"Failed to load model on startup: {e}")
+        logger.info("Model will attempt to load on first prediction request")
 
 
 @app.get("/")
@@ -190,7 +199,7 @@ async def predict(stats: CharacterStats):
                 confidence = 1.0
 
         except Exception as e:
-            print(f"Could not get probabilities: {e}")
+            logger.warning(f"Could not get probabilities: {e}")
             prob_dict = {prediction: 1.0}
             confidence = 1.0
 

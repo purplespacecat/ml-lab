@@ -3,12 +3,21 @@ Gradio UI for D&D Character Class Predictor
 Provides a user-friendly interface to predict character classes
 """
 import os
+import logging
 import gradio as gr
 import requests
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 MODEL_SERVER_URL = os.getenv('MODEL_SERVER_URL', 'http://localhost:8000')
 
@@ -207,10 +216,10 @@ with gr.Blocks(title="D&D Character Class Predictor", theme=gr.themes.Soft()) as
 
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("Starting Gradio UI for D&D Character Class Predictor")
-    print(f"Model Server URL: {MODEL_SERVER_URL}")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("Starting Gradio UI for D&D Character Class Predictor")
+    logger.info(f"Model Server URL: {MODEL_SERVER_URL}")
+    logger.info("=" * 60)
 
     demo.launch(
         server_name="0.0.0.0",
