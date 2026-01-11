@@ -68,20 +68,15 @@ services:
         condition: service_completed_successfully
     environment:
       MLFLOW_BACKEND_STORE_URI: postgresql://${POSTGRES_USER:-mlflow}:${POSTGRES_PASSWORD:-mlflow}@postgres:5432/${POSTGRES_DB:-mlflow}
+      MLFLOW_DEFAULT_ARTIFACT_ROOT: s3://${MINIO_BUCKET:-mlflow}/
       MLFLOW_S3_ENDPOINT_URL: http://minio:9000
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
     ports:
       - "5000:5000"
-    command: >
-      sh -c "
-      pip install mlflow==2.9.2 psycopg2-binary boto3 &&
-      mlflow server
-        --backend-store-uri postgresql://${POSTGRES_USER:-mlflow}:${POSTGRES_PASSWORD:-mlflow}@postgres:5432/${POSTGRES_DB:-mlflow}
-        --default-artifact-root s3://${MINIO_BUCKET:-mlflow}/
-        --host 0.0.0.0
-        --port 5000
-      "
+    volumes:
+      - ./start-mlflow.sh:/start-mlflow.sh
+    command: /start-mlflow.sh
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 10s
@@ -100,8 +95,11 @@ services:
         condition: service_healthy
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MODEL_NAME: ${MODEL_NAME:-dnd-character-classifier}
-      MODEL_STAGE: ${MODEL_STAGE:-Production}
+      MODEL_STAGE: ${MODEL_STAGE:-None}
     ports:
       - "8000:8000"
     networks:

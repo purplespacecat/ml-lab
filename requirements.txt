@@ -14,7 +14,7 @@ uvicorn[standard]==0.25.0
 pydantic==2.5.3
 
 # UI
-gradio==4.13.0
+gradio>=5.0.0
 
 # Utilities
 python-dotenv==1.0.0

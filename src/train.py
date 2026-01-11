@@ -77,8 +77,10 @@ def train_model(n_estimators=100, max_depth=10, random_state=42):
     df = generate_character_data(n_samples_per_class=500)
 
     # Save sample data for reference
-    os.makedirs('../data', exist_ok=True)
-    df.head(100).to_csv('../data/sample_characters.csv', index=False)
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(project_root, 'data')
+    os.makedirs(data_dir, exist_ok=True)
+    df.head(100).to_csv(os.path.join(data_dir, 'sample_characters.csv'), index=False)
 
     logger.info(f"Generated {len(df)} characters across {df['class'].nunique()} classes")
     logger.info(f"Class distribution:\n{df['class'].value_counts()}")
