@@ -14,10 +14,9 @@ uvicorn[standard]==0.25.0
 pydantic==2.5.3
 
 # UI
-# Note: Gradio 5.x has compatibility issues with newer huggingface-hub versions
-# that removed the HfFolder class. Using Gradio 4.44.1 with compatible hub version.
-gradio==4.44.1
-huggingface-hub==0.25.2
+# Using Gradio 4.x (latest stable before 5.x breaking changes)
+gradio==4.44.0
+huggingface-hub<1.0
 
 # Utilities
 python-dotenv==1.0.0

@@ -65,13 +65,19 @@ def predict_character_class(strength, dexterity, constitution, intelligence, wis
         # Sort probabilities for better visualization
         sorted_probs = dict(sorted(all_probs.items(), key=lambda x: x[1], reverse=True))
 
+        # Format as percentage strings for JSON display
+        formatted_probs = {
+            class_name: f"{prob:.2%}"
+            for class_name, prob in sorted_probs.items()
+        }
+
         # Create detailed probability text
         prob_details = "### All Class Probabilities:\n\n"
         for class_name, prob in sorted_probs.items():
             bar = "█" * int(prob * 20)
             prob_details += f"**{class_name}**: {prob:.2%} {bar}\n\n"
 
-        return prediction_text, sorted_probs, prob_details
+        return prediction_text, formatted_probs, prob_details
 
     except requests.exceptions.ConnectionError:
         error_msg = f"❌ Cannot connect to model server at {MODEL_SERVER_URL}\n\nPlease ensure the model server is running."
@@ -165,14 +171,9 @@ with gr.Blocks(title="D&D Character Class Predictor", theme=gr.themes.Soft()) as
             prediction_output = gr.Markdown("*Results will appear here*")
 
             gr.Markdown("### Probability Distribution")
-            probability_chart = gr.BarPlot(
-                x="class",
-                y="probability",
-                title="Class Probabilities",
-                y_lim=[0, 1],
-                height=300,
-                interactive=False
-            )
+
+            # Using JSON for compatibility - BarPlot has rendering issues in some versions
+            probability_chart = gr.JSON(label="Class Probabilities")
 
             probability_details = gr.Markdown("")
 
