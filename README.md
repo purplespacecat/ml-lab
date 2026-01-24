@@ -60,6 +60,15 @@ cp .env.example .env
 
 ### 2. Start Infrastructure
 
+**Option A: Using the startup script (Recommended)**
+
+```bash
+# Start all services with health checks
+./start-lab.sh
+```
+
+**Option B: Manual startup**
+
 ```bash
 # Start all services
 docker-compose up -d
@@ -109,6 +118,9 @@ ml-lab/
 ├── requirements.txt            # Python dependencies
 ├── Dockerfile.serve            # FastAPI server container
 ├── Dockerfile.ui               # Gradio UI container
+├── start-lab.sh                # Startup script with health checks
+├── stop-lab.sh                 # Shutdown script
+├── status-lab.sh               # Status check script
 ├── src/
 │   ├── train.py               # Model training script
 │   ├── serve.py               # FastAPI serving layer
@@ -266,12 +278,28 @@ Key environment variables (see `.env.example`):
 
 ## Stopping Services
 
+**Using the stop script:**
+
+```bash
+./stop-lab.sh
+```
+
+**Or manually:**
+
 ```bash
 # Stop all services
 docker-compose down
 
 # Stop and remove volumes (clean slate)
 docker-compose down -v
+```
+
+## Checking Status
+
+To check the health of all services:
+
+```bash
+./status-lab.sh
 ```
 
 ## Next Steps
